@@ -1,0 +1,8 @@
+# handlers/main.yml
+---
+# handlers/main.yml
+- name: Start and enable nginx
+  service:
+    name: "{{ nginx_package }}"
+    state: started
+    enabled: yes

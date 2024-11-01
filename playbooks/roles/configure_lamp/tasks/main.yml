@@ -1,0 +1,87 @@
+---
+# Add tasks to automate the steps done during weeks 5 and 6 here
+# Use the defaults/ and files/ directories too
+
+- name: Does Repo Exist
+  stat:
+    path: '/repo/.git'
+  register: checkRepo
+
+- name: Clone Repo
+  become: true
+  git:
+    repo: 'https://github.com/EdgeKing810/interns-docker-compose-lamp'
+    dest: '/repo/'
+  when: not checkRepo.stat.exists
+
+- name: Does ENV Sample Exist
+  stat:
+    path: '/repo/.env.sample'
+  register: checkENVSample
+
+- name: Rename ENV File
+  become: true
+  copy:
+    src: /repo/.env.sample
+    dest: /repo/.env
+    remote_src: true
+  when: checkENVSample.stat.exists
+
+- name: Remove old ENV
+  become: true
+  file:
+    path: /repo/.env.sample
+    state: absent
+  when: checkENVSample.stat.exists
+
+- name: Modify ENV File
+  become: true
+  blockinfile:
+    path: /repo/.env
+    block: |
+      MYSQL_ROOT_PASSWORD=password
+      MYSQL_DATABASE=mydatabase
+      MYSQL_USER=user
+      MYSQL_PASSWORD=password
+
+
+      HOST_MACHINE_HTTP_PORT=8080
+      HOST_MACHINE_MYSQL_PORT=3306
+      HOST_MACHINE_PHPMYADMIN_PORT=8090
+    insertafter: EOF
+
+- name: Move new Docker File
+  become: true
+  copy:
+    src: Dockerfile
+    dest: /repo/bin/webserver/Dockerfile
+    force: true
+    
+- name: Move Docker Compose File
+  become: true
+  copy:
+    src: docker-compose.yml
+    dest: /repo/docker-compose.yml
+    force: true
+
+- name: Install Docker
+  apt:
+    name: docker-ce
+    state: present
+
+- name: Start Docker service
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Deploy Docker
+  become: true
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: /repo
+  tags: compose_up
+  
+- name: Debug docker-compose output
+  debug:
+    var: docker_compose_result

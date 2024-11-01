@@ -1,0 +1,7 @@
+# defaults/main.yml
+---
+# Define package names
+python3_package: python3
+nginx_package: nginx
+docker_package: docker
+docker_compose_package: docker-compose

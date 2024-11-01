@@ -1,0 +1,91 @@
+---
+# Add tasks to update and upgrade the system here
+# Add tasks to install packages such as python3 and nginx here
+# Use a defaults/main.yml file to define package names and/or versions if necessary
+# Use a handlers/main.yml file to enable and start nginx
+
+- name: Update the apt package index
+  become: yes
+  apt:
+    update_cache: yes
+
+- name: Upgrade all packages to the latest version
+  become: yes
+  apt:
+    upgrade: dist
+
+- name: Update the apt package index
+  become: yes
+  apt:
+    update_cache: yes
+
+- name: Upgrade all packages to the latest version
+  become: yes
+  apt:
+    upgrade: dist
+
+- name: Install python3 and nginx
+  become: yes
+  apt:
+    name:
+      - python3
+      - nginx
+    state: present
+
+- name: Ensure conflicting packages are removed
+  apt:
+    name: containerd
+    state: absent
+  become: yes
+
+- name: Unhold all held packages
+  shell: "apt-mark unhold {{ item }}"
+  with_items:
+    - containerd.io
+    - containerd
+    - docker.io
+  ignore_errors: yes
+  become: yes
+
+- name: Clean up unused packages
+  become: true
+  apt:
+    autoclean: yes
+    autoremove: yes
+
+- name: Install Docker and Docker Compose
+  become: yes
+  apt:
+    name:
+      - docker
+      - docker-compose
+    state: present
+
+- name: Ensure Docker service is running
+  become: yes
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Update the package index and upgrade packages
+  become: yes
+  apt:
+    update_cache: yes
+    upgrade: dist
+
+- name: Install packages
+  become: yes
+  apt:
+    name:
+      - "{{ python3_package }}"
+      - "{{ nginx_package }}"
+      - "{{ docker_package }}"
+      - "{{ docker_compose_package }}"
+    state: present
+
+- name: Ensure NGINX is installed
+  apt:
+    name: nginx
+    state: present
+  become: yes
